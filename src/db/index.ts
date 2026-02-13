@@ -1,0 +1,48 @@
+import path from "node:path";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { count } from "drizzle-orm";
+import * as schema from "./schema";
+import { seed } from "./seed";
+
+type DB = ReturnType<typeof drizzle<typeof schema>>;
+
+declare global {
+  var __db: DB | undefined;
+}
+
+function initDb(): DB {
+  if (global.__db) return global.__db;
+
+  const dbPath = path.join(process.cwd(), "sqlite.db");
+  const sqlite = new Database(dbPath);
+  sqlite.pragma("journal_mode = WAL");
+
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL DEFAULT '',
+      priority TEXT NOT NULL DEFAULT 'medium',
+      status TEXT NOT NULL DEFAULT 'todo',
+      position INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  global.__db = drizzle(sqlite, { schema });
+
+  const [result] = global.__db.select({ count: count() }).from(schema.tasks).all();
+  if (result.count === 0) {
+    seed();
+  }
+
+  return global.__db;
+}
+
+export const db = new Proxy({} as DB, {
+  get(_target, prop) {
+    const instance = initDb();
+    return (instance as unknown as Record<string | symbol, unknown>)[prop];
+  },
+});
