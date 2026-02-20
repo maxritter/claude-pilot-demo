@@ -32,6 +32,16 @@ Every line of code — from database schema to UI components to 44 tests — was
 
 ## The Demo
 
+<p align="center">
+  <a href="https://youtu.be/NHw8BloZB_M">
+    <img src="https://img.youtube.com/vi/NHw8BloZB_M/maxresdefault.jpg" alt="Watch the Claude Pilot Demo" width="700">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/NHw8BloZB_M"><b>Watch the full demo on YouTube</b></a>
+</p>
+
 This demo was recorded live and shows all three features being built in real-time using Claude Pilot's `/spec` workflow — each one-shotted with zero manual code edits:
 
 - `/spec` plans the feature, explores the codebase, writes a detailed spec
