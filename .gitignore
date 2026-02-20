@@ -246,7 +246,6 @@ playwright/
 .DS_Store
 
 # Build artifacts
-docs/plans
 docs/license
 docs/video
 docs/slides
