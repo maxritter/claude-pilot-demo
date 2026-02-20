@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { tasks, subtasks } from "@/db/schema";
+import { tasks, subtasks, taskLabels } from "@/db/schema";
 import type { Priority, Status } from "@/lib/types";
 import { eq, max, and, ne } from "drizzle-orm";
 
@@ -80,7 +80,7 @@ export async function deleteTask(id: number) {
       }
 
       tx.delete(subtasks).where(eq(subtasks.taskId, id)).run();
-
+      tx.delete(taskLabels).where(eq(taskLabels.taskId, id)).run();
       tx.delete(tasks).where(eq(tasks.id, id)).run();
 
       const remaining = tx

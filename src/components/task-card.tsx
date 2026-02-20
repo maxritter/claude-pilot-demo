@@ -7,18 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteTaskDialog } from "./delete-task-dialog";
-import type { Task, Subtask } from "@/lib/types";
+import { LABEL_COLORS } from "@/lib/label-colors";
+import type { Task, Subtask, Label, LabelColor } from "@/lib/types";
 
 const priorityColors = {
   low: "bg-green-100 text-green-800 border-green-300",
   medium: "bg-amber-100 text-amber-800 border-amber-300",
   high: "bg-red-100 text-red-800 border-red-300",
 };
-
-interface TaskCardProps {
-  task: Task;
-  subtasks: Subtask[];
-}
 
 function SubtaskProgress({ subtasks }: { subtasks: Subtask[] }) {
   if (subtasks.length === 0) return null;
@@ -47,7 +43,19 @@ function SubtaskProgress({ subtasks }: { subtasks: Subtask[] }) {
   );
 }
 
-export function TaskCard({ task, subtasks }: TaskCardProps) {
+interface TaskCardProps {
+  task: Task;
+  subtasks: Subtask[];
+  taskLabels: Label[];
+  allLabels: Label[];
+}
+
+export function TaskCard({
+  task,
+  subtasks,
+  taskLabels,
+  allLabels,
+}: TaskCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -92,7 +100,7 @@ export function TaskCard({ task, subtasks }: TaskCardProps) {
           </div>
         </CardHeader>
         {(task.description || subtasks.length > 0) && (
-          <CardContent>
+          <CardContent className="pb-2">
             {task.description && (
               <p className="text-sm text-muted-foreground line-clamp-2">
                 {task.description}
@@ -101,12 +109,31 @@ export function TaskCard({ task, subtasks }: TaskCardProps) {
             <SubtaskProgress subtasks={subtasks} />
           </CardContent>
         )}
+        {taskLabels.length > 0 && (
+          <CardContent className="pt-0 pb-3">
+            <div className="flex flex-wrap gap-1">
+              {taskLabels.map((label) => {
+                const colors = LABEL_COLORS[label.color as LabelColor];
+                return (
+                  <span
+                    key={label.id}
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${colors.bg} ${colors.text}`}
+                  >
+                    {label.name}
+                  </span>
+                );
+              })}
+            </div>
+          </CardContent>
+        )}
       </Card>
       <EditTaskDialog
         task={task}
         subtasks={subtasks}
         open={editOpen}
         onOpenChange={setEditOpen}
+        allLabels={allLabels}
+        taskLabels={taskLabels}
       />
       <DeleteTaskDialog
         taskId={task.id}

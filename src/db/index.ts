@@ -3,7 +3,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { count } from "drizzle-orm";
 import * as schema from "./schema";
-import { seed } from "./seed";
+import { seed, seedLabels } from "./seed";
 
 type DB = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -34,6 +34,22 @@ function ensureTables(sqlite: Database.Database) {
       position INTEGER NOT NULL DEFAULT 0
     )
   `);
+
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS labels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL
+    )
+  `);
+
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS task_labels (
+      task_id INTEGER NOT NULL,
+      label_id INTEGER NOT NULL,
+      PRIMARY KEY (task_id, label_id)
+    )
+  `);
 }
 
 function initDb(): DB {
@@ -57,6 +73,14 @@ function initDb(): DB {
     .all();
   if (result.count === 0) {
     seed();
+  }
+
+  const [labelResult] = global.__db
+    .select({ count: count() })
+    .from(schema.labels)
+    .all();
+  if (labelResult.count === 0) {
+    seedLabels();
   }
 
   return global.__db;

@@ -10,6 +10,16 @@ import {
   deleteSubtask,
   moveSubtask,
 } from "./subtask-actions";
+import {
+  createLabel,
+  updateLabel,
+  deleteLabel,
+  getLabels,
+  addLabelToTask,
+  removeLabelFromTask,
+  getTaskLabels,
+  getAllTaskLabels,
+} from "./label-actions";
 
 let testDb: ReturnType<typeof drizzle<typeof schema>>;
 let sqlite: Database.Database;
@@ -24,11 +34,8 @@ vi.mock("@/db", () => ({
   },
 }));
 
-beforeEach(() => {
-  sqlite = new Database(":memory:");
-  testDb = drizzle(sqlite, { schema });
-
-  sqlite.exec(`
+function createTestSchema(db: Database.Database) {
+  db.exec(`
     CREATE TABLE tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
@@ -40,7 +47,7 @@ beforeEach(() => {
     )
   `);
 
-  sqlite.exec(`
+  db.exec(`
     CREATE TABLE subtasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       task_id INTEGER NOT NULL,
@@ -49,6 +56,27 @@ beforeEach(() => {
       position INTEGER NOT NULL DEFAULT 0
     )
   `);
+
+  db.exec(`
+    CREATE TABLE labels (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      color TEXT NOT NULL
+    )
+  `);
+  db.exec(`
+    CREATE TABLE task_labels (
+      task_id INTEGER NOT NULL,
+      label_id INTEGER NOT NULL,
+      PRIMARY KEY (task_id, label_id)
+    )
+  `);
+}
+
+beforeEach(() => {
+  sqlite = new Database(":memory:");
+  testDb = drizzle(sqlite, { schema });
+  createTestSchema(sqlite);
 });
 
 afterEach(() => {
@@ -79,7 +107,9 @@ describe("createTask", () => {
     const newTask = tasks.find((t) => t.title === "New Task");
     expect(newTask?.position).toBe(1);
   });
+});
 
+describe("createTask - validation", () => {
   it("should reject empty title at server level", async () => {
     await expect(createTask({ title: "   " })).rejects.toThrow("Title is required");
 
@@ -161,6 +191,15 @@ describe("deleteTask", () => {
     const remaining = testDb.select().from(schema.subtasks)
       .where(eq(schema.subtasks.taskId, task.id)).all();
     expect(remaining).toHaveLength(0);
+  });
+
+  it("should cascade delete task_labels when task is deleted", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    testDb.insert(schema.taskLabels).values({ taskId: task.id, labelId: label.id }).run();
+    await deleteTask(task.id);
+    const rows = testDb.select().from(schema.taskLabels).all();
+    expect(rows).toHaveLength(0);
   });
 });
 
@@ -247,7 +286,6 @@ describe("moveTask", () => {
     expect(tasks[2].position).toBe(2);
   });
 });
-
 
 describe("createSubtask", () => {
   it("should create a subtask with position 0 when none exist", async () => {
@@ -422,5 +460,168 @@ describe("moveSubtask", () => {
 
   it("should throw when subtask does not exist", async () => {
     await expect(moveSubtask(999, 0)).rejects.toThrow("Subtask not found");
+  });
+});
+
+describe("createLabel", () => {
+  it("should create a label with valid name and color", async () => {
+    await createLabel({ name: "Bug", color: "red" });
+    const result = testDb.select().from(schema.labels).all();
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Bug");
+    expect(result[0].color).toBe("red");
+  });
+
+  it("should reject empty name", async () => {
+    await expect(createLabel({ name: "   ", color: "blue" })).rejects.toThrow("Label name is required");
+  });
+
+  it("should reject invalid color", async () => {
+    await expect(createLabel({ name: "Bug", color: "magenta" as "red" })).rejects.toThrow("Invalid label color");
+  });
+});
+
+describe("updateLabel", () => {
+  it("should update label name and color", async () => {
+    const label = testDb.insert(schema.labels).values({ name: "Old", color: "red" }).returning().get();
+    await updateLabel(label.id, { name: "New", color: "blue" });
+    const updated = testDb.select().from(schema.labels).where(eq(schema.labels.id, label.id)).get();
+    expect(updated?.name).toBe("New");
+    expect(updated?.color).toBe("blue");
+  });
+
+  it("should throw when label does not exist", async () => {
+    await expect(updateLabel(999, { name: "Nope" })).rejects.toThrow("Label not found");
+  });
+
+  it("should reject invalid color", async () => {
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    await expect(updateLabel(label.id, { color: "magenta" as "red" })).rejects.toThrow("Invalid label color");
+  });
+
+  it("should reject empty name", async () => {
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    await expect(updateLabel(label.id, { name: "   " })).rejects.toThrow("Label name is required");
+  });
+});
+
+describe("deleteLabel", () => {
+  it("should delete a label", async () => {
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    await deleteLabel(label.id);
+    const result = testDb.select().from(schema.labels).all();
+    expect(result).toHaveLength(0);
+  });
+
+  it("should cascade delete task_labels", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Task A", status: "todo", position: 0 }).returning().get();
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    testDb.insert(schema.taskLabels).values({ taskId: task.id, labelId: label.id }).run();
+
+    await deleteLabel(label.id);
+
+    const taskLabelRows = testDb.select().from(schema.taskLabels).all();
+    expect(taskLabelRows).toHaveLength(0);
+  });
+
+  it("should throw when label does not exist", async () => {
+    await expect(deleteLabel(999)).rejects.toThrow("Label not found");
+  });
+});
+
+describe("getLabels", () => {
+  it("should return all labels ordered by id", async () => {
+    testDb.insert(schema.labels).values([
+      { name: "Bug", color: "red" },
+      { name: "Feature", color: "blue" },
+    ]).run();
+    const result = await getLabels();
+    expect(result).toHaveLength(2);
+    expect(result[0].name).toBe("Bug");
+    expect(result[1].name).toBe("Feature");
+  });
+
+  it("should return empty array when no labels", async () => {
+    const result = await getLabels();
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe("addLabelToTask", () => {
+  it("should create a task-label association", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    await addLabelToTask(task.id, label.id);
+    const rows = testDb.select().from(schema.taskLabels).all();
+    expect(rows).toHaveLength(1);
+    expect(rows[0].taskId).toBe(task.id);
+    expect(rows[0].labelId).toBe(label.id);
+  });
+
+  it("should be idempotent — adding the same association twice does not error", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    await addLabelToTask(task.id, label.id);
+    await addLabelToTask(task.id, label.id);
+    const rows = testDb.select().from(schema.taskLabels).all();
+    expect(rows).toHaveLength(1);
+  });
+
+  it("should throw when task does not exist", async () => {
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    await expect(addLabelToTask(999, label.id)).rejects.toThrow("Task not found");
+  });
+
+  it("should throw when label does not exist", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    await expect(addLabelToTask(task.id, 999)).rejects.toThrow("Label not found");
+  });
+});
+
+describe("removeLabelFromTask", () => {
+  it("should remove a task-label association", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    testDb.insert(schema.taskLabels).values({ taskId: task.id, labelId: label.id }).run();
+    await removeLabelFromTask(task.id, label.id);
+    const rows = testDb.select().from(schema.taskLabels).all();
+    expect(rows).toHaveLength(0);
+  });
+
+  it("should be idempotent — removing non-existent association does not error", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    await expect(removeLabelFromTask(task.id, label.id)).resolves.toBeUndefined();
+  });
+});
+
+describe("getTaskLabels", () => {
+  it("should return labels for a specific task", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const label = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    testDb.insert(schema.taskLabels).values({ taskId: task.id, labelId: label.id }).run();
+    const result = await getTaskLabels(task.id);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Bug");
+  });
+
+  it("should return empty array when task has no labels", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const result = await getTaskLabels(task.id);
+    expect(result).toHaveLength(0);
+  });
+});
+
+describe("getAllTaskLabels", () => {
+  it("should return all task-label associations", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "T", status: "todo", position: 0 }).returning().get();
+    const l1 = testDb.insert(schema.labels).values({ name: "Bug", color: "red" }).returning().get();
+    const l2 = testDb.insert(schema.labels).values({ name: "Feature", color: "blue" }).returning().get();
+    testDb.insert(schema.taskLabels).values([
+      { taskId: task.id, labelId: l1.id },
+      { taskId: task.id, labelId: l2.id },
+    ]).run();
+    const result = await getAllTaskLabels();
+    expect(result).toHaveLength(2);
   });
 });

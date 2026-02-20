@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
 import { toast } from "sonner";
 import { Column } from "./column";
+import { LabelFilter } from "./label-filter";
 import { moveTask } from "@/app/actions";
-import type { Task, Status, SubtasksMap } from "@/lib/types";
+import type { Task, Status, SubtasksMap, Label, TaskLabel } from "@/lib/types";
 
 interface BoardProps {
   tasks: Task[];
   subtasksMap: SubtasksMap;
+  labels: Label[];
+  taskLabels: TaskLabel[];
 }
 
 type GroupedTasks = {
@@ -32,14 +35,63 @@ export function groupTasksByStatus(taskList: Task[]): GroupedTasks {
   };
 }
 
-export function Board({ tasks: initialTasks, subtasksMap }: BoardProps) {
+export function Board({
+  tasks: initialTasks,
+  subtasksMap,
+  labels,
+  taskLabels,
+}: BoardProps) {
   const [columns, setColumns] = useState<GroupedTasks>(() =>
     groupTasksByStatus(initialTasks),
   );
+  const [activeFilterIds, setActiveFilterIds] = useState<Set<number>>(
+    new Set(),
+  );
+
+  const labelsByTask = useMemo(() => {
+    const map: Record<number, Label[]> = {};
+    const labelMap = new Map(labels.map((l) => [l.id, l]));
+    for (const tl of taskLabels) {
+      const label = labelMap.get(tl.labelId);
+      if (label) {
+        (map[tl.taskId] ??= []).push(label);
+      }
+    }
+    return map;
+  }, [labels, taskLabels]);
 
   useEffect(() => {
     setColumns(groupTasksByStatus(initialTasks));
   }, [initialTasks]);
+
+  useEffect(() => {
+    const validIds = new Set(labels.map((l) => l.id));
+    setActiveFilterIds((prev) => {
+      const next = new Set([...prev].filter((id) => validIds.has(id)));
+      if (next.size === prev.size) return prev;
+      return next;
+    });
+  }, [labels]);
+
+  const toggleFilter = useCallback((labelId: number) => {
+    setActiveFilterIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(labelId)) next.delete(labelId);
+      else next.add(labelId);
+      return next;
+    });
+  }, []);
+
+  const clearFilters = useCallback(() => setActiveFilterIds(new Set()), []);
+
+  const filterTasks = (tasks: Task[]) => {
+    if (activeFilterIds.size === 0) return tasks;
+    return tasks.filter((task) =>
+      (labelsByTask[task.id] ?? []).some((l) => activeFilterIds.has(l.id)),
+    );
+  };
+
+  const isFiltering = activeFilterIds.size > 0;
 
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination, draggableId } = result;
@@ -90,27 +142,49 @@ export function Board({ tasks: initialTasks, subtasksMap }: BoardProps) {
   };
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <Column
-          title="To Do"
-          status="todo"
-          tasks={columns.todo}
-          subtasksMap={subtasksMap}
-        />
-        <Column
-          title="In Progress"
-          status="in-progress"
-          tasks={columns["in-progress"]}
-          subtasksMap={subtasksMap}
-        />
-        <Column
-          title="Done"
-          status="done"
-          tasks={columns.done}
-          subtasksMap={subtasksMap}
-        />
-      </div>
-    </DragDropContext>
+    <div>
+      <LabelFilter
+        labels={labels}
+        activeIds={activeFilterIds}
+        onToggle={toggleFilter}
+        onClear={clearFilters}
+      />
+      {isFiltering && (
+        <p className="text-xs text-muted-foreground mb-2">
+          Clear filters to reorder tasks
+        </p>
+      )}
+      <DragDropContext onDragEnd={isFiltering ? () => {} : handleDragEnd}>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          <Column
+            title="To Do"
+            status="todo"
+            tasks={filterTasks(columns.todo)}
+            subtasksMap={subtasksMap}
+            labelsByTask={labelsByTask}
+            allLabels={labels}
+            isDragDisabled={isFiltering}
+          />
+          <Column
+            title="In Progress"
+            status="in-progress"
+            tasks={filterTasks(columns["in-progress"])}
+            subtasksMap={subtasksMap}
+            labelsByTask={labelsByTask}
+            allLabels={labels}
+            isDragDisabled={isFiltering}
+          />
+          <Column
+            title="Done"
+            status="done"
+            tasks={filterTasks(columns.done)}
+            subtasksMap={subtasksMap}
+            labelsByTask={labelsByTask}
+            allLabels={labels}
+            isDragDisabled={isFiltering}
+          />
+        </div>
+      </DragDropContext>
+    </div>
   );
 }
