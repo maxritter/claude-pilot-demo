@@ -25,6 +25,8 @@ import { updateTask } from "@/app/actions";
 import { SubtaskChecklist } from "./subtask-checklist";
 import { addLabelToTask, removeLabelFromTask } from "@/app/label-actions";
 import { LABEL_COLORS } from "@/lib/label-colors";
+import { dateToIso } from "@/lib/date-utils";
+import { DatePicker } from "@/components/date-picker";
 import type {
   Task,
   Priority,
@@ -32,6 +34,12 @@ import type {
   Label as LabelType,
   LabelColor,
 } from "@/lib/types";
+
+function parseIsoToLocal(dateStr: string | null): Date | undefined {
+  if (!dateStr) return undefined;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
 
 interface EditTaskDialogProps {
   task: Task;
@@ -54,6 +62,9 @@ export function EditTaskDialog({
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [priority, setPriority] = useState<Priority>(task.priority);
+  const [dueDate, setDueDate] = useState<Date | undefined>(
+    parseIsoToLocal(task.dueDate),
+  );
   const [localSubtasks, setLocalSubtasks] = useState<Subtask[]>(subtasksProp);
   const [selectedLabelIds, setSelectedLabelIds] = useState<Set<number>>(
     () => new Set(taskLabels.map((l) => l.id)),
@@ -64,9 +75,17 @@ export function EditTaskDialog({
       setTitle(task.title);
       setDescription(task.description);
       setPriority(task.priority);
+      setDueDate(parseIsoToLocal(task.dueDate));
       setSelectedLabelIds(new Set(taskLabels.map((l) => l.id)));
     }
-  }, [open, task.title, task.description, task.priority, taskLabels]);
+  }, [
+    open,
+    task.title,
+    task.description,
+    task.priority,
+    task.dueDate,
+    taskLabels,
+  ]);
 
   useEffect(() => {
     setLocalSubtasks(subtasksProp);
@@ -112,6 +131,7 @@ export function EditTaskDialog({
         title: title.trim(),
         description: description.trim(),
         priority,
+        dueDate: dueDate ? dateToIso(dueDate) : null,
       });
       toast.success("Task updated");
       onOpenChange(false);
@@ -168,6 +188,14 @@ export function EditTaskDialog({
                   <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Due Date (optional)</Label>
+              <DatePicker
+                value={dueDate}
+                onChange={setDueDate}
+                disabled={isPending}
+              />
             </div>
             <SubtaskChecklist
               taskId={task.id}

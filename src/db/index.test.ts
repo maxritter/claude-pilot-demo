@@ -18,6 +18,7 @@ describe("auto-seed on empty database", () => {
         priority TEXT NOT NULL DEFAULT 'medium',
         status TEXT NOT NULL DEFAULT 'todo',
         position INTEGER NOT NULL DEFAULT 0,
+        due_date TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
     `);

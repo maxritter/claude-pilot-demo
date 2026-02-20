@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteTaskDialog } from "./delete-task-dialog";
+import { DueDateBadge } from "./due-date-badge";
 import { LABEL_COLORS } from "@/lib/label-colors";
 import type { Task, Subtask, Label, LabelColor } from "@/lib/types";
 
@@ -99,7 +100,7 @@ export function TaskCard({
             </div>
           </div>
         </CardHeader>
-        {(task.description || subtasks.length > 0) && (
+        {(task.description || subtasks.length > 0 || task.dueDate) && (
           <CardContent className="pb-2">
             {task.description && (
               <p className="text-sm text-muted-foreground line-clamp-2">
@@ -107,6 +108,7 @@ export function TaskCard({
               </p>
             )}
             <SubtaskProgress subtasks={subtasks} />
+            <DueDateBadge dueDate={task.dueDate} />
           </CardContent>
         )}
         {taskLabels.length > 0 && (

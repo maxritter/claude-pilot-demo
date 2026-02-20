@@ -17,6 +17,7 @@ export const tasks = sqliteTable("tasks", {
     .notNull()
     .default("todo"),
   position: integer("position").notNull().default(0),
+  dueDate: text("due_date"),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

@@ -21,6 +21,8 @@ type GroupedTasks = {
   done: Task[];
 };
 
+type SortState = Record<Status, boolean>;
+
 export function groupTasksByStatus(taskList: Task[]): GroupedTasks {
   return {
     todo: taskList
@@ -35,12 +37,47 @@ export function groupTasksByStatus(taskList: Task[]): GroupedTasks {
   };
 }
 
+function parseDateLocal(dateStr: string): Date {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function sortColumnByDueDate(tasks: Task[]): Task[] {
+  const withDate = tasks
+    .filter((t) => t.dueDate)
+    .sort((a, b) => {
+      return (
+        parseDateLocal(a.dueDate!).getTime() -
+        parseDateLocal(b.dueDate!).getTime()
+      );
+    });
+  const withoutDate = tasks.filter((t) => !t.dueDate);
+  return [...withDate, ...withoutDate];
+}
+
+function applySort(grouped: GroupedTasks, sort: SortState): GroupedTasks {
+  return {
+    todo: sort.todo ? sortColumnByDueDate(grouped.todo) : grouped.todo,
+    "in-progress": sort["in-progress"]
+      ? sortColumnByDueDate(grouped["in-progress"])
+      : grouped["in-progress"],
+    done: sort.done ? sortColumnByDueDate(grouped.done) : grouped.done,
+  };
+}
+
+const defaultSort: SortState = {
+  todo: false,
+  "in-progress": false,
+  done: false,
+};
+
 export function Board({
   tasks: initialTasks,
   subtasksMap,
   labels,
   taskLabels,
 }: BoardProps) {
+  const [sortByDueDate, setSortByDueDate] = useState<SortState>(defaultSort);
   const [columns, setColumns] = useState<GroupedTasks>(() =>
     groupTasksByStatus(initialTasks),
   );
@@ -61,7 +98,8 @@ export function Board({
   }, [labels, taskLabels]);
 
   useEffect(() => {
-    setColumns(groupTasksByStatus(initialTasks));
+    setColumns(applySort(groupTasksByStatus(initialTasks), sortByDueDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialTasks]);
 
   useEffect(() => {
@@ -72,6 +110,14 @@ export function Board({
       return next;
     });
   }, [labels]);
+
+  const handleToggleSort = (status: Status) => {
+    setSortByDueDate((prev) => {
+      const next = { ...prev, [status]: !prev[status] };
+      setColumns(applySort(groupTasksByStatus(initialTasks), next));
+      return next;
+    });
+  };
 
   const toggleFilter = useCallback((labelId: number) => {
     setActiveFilterIds((prev) => {
@@ -106,8 +152,13 @@ export function Board({
 
     const sourceStatus = source.droppableId as Status;
     const destStatus = destination.droppableId as Status;
-    const taskId = parseInt(draggableId, 10);
 
+    if (sortByDueDate[sourceStatus] || sortByDueDate[destStatus]) {
+      toast.info("Disable due date sort to reorder tasks.");
+      return;
+    }
+
+    const taskId = parseInt(draggableId, 10);
     const snapshot: GroupedTasks = JSON.parse(JSON.stringify(columns));
 
     setColumns((prevColumns) => {
@@ -119,7 +170,6 @@ export function Board({
           : [...newColumns[destStatus]];
 
       const [movedTask] = sourceColumn.splice(source.index, 1);
-
       destColumn.splice(destination.index, 0, {
         ...movedTask,
         status: destStatus,
@@ -163,7 +213,9 @@ export function Board({
             subtasksMap={subtasksMap}
             labelsByTask={labelsByTask}
             allLabels={labels}
-            isDragDisabled={isFiltering}
+            isDragDisabled={isFiltering || sortByDueDate.todo}
+            sortByDueDate={sortByDueDate.todo}
+            onToggleSort={() => handleToggleSort("todo")}
           />
           <Column
             title="In Progress"
@@ -172,7 +224,9 @@ export function Board({
             subtasksMap={subtasksMap}
             labelsByTask={labelsByTask}
             allLabels={labels}
-            isDragDisabled={isFiltering}
+            isDragDisabled={isFiltering || sortByDueDate["in-progress"]}
+            sortByDueDate={sortByDueDate["in-progress"]}
+            onToggleSort={() => handleToggleSort("in-progress")}
           />
           <Column
             title="Done"
@@ -181,7 +235,9 @@ export function Board({
             subtasksMap={subtasksMap}
             labelsByTask={labelsByTask}
             allLabels={labels}
-            isDragDisabled={isFiltering}
+            isDragDisabled={isFiltering || sortByDueDate.done}
+            sortByDueDate={sortByDueDate.done}
+            onToggleSort={() => handleToggleSort("done")}
           />
         </div>
       </DragDropContext>

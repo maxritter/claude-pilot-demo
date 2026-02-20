@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { createTask } from "@/app/actions";
 import type { Priority } from "@/lib/types";
+import { dateToIso } from "@/lib/date-utils";
+import { DatePicker } from "@/components/date-picker";
 
 export function CreateTaskDialog() {
   const [open, setOpen] = useState(false);
@@ -31,6 +33,7 @@ export function CreateTaskDialog() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [dueDate, setDueDate] = useState<Date | undefined>(undefined);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,12 +50,14 @@ export function CreateTaskDialog() {
         title: title.trim(),
         description: description.trim(),
         priority,
+        dueDate: dueDate ? dateToIso(dueDate) : null,
       });
       toast.success("Task created");
       setOpen(false);
       setTitle("");
       setDescription("");
       setPriority("medium");
+      setDueDate(undefined);
     } catch (error) {
       toast.error("Failed to create task");
       console.error(error);
@@ -70,9 +75,7 @@ export function CreateTaskDialog() {
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create Task</DialogTitle>
-            <DialogDescription>
-              Add a new task to your board.
-            </DialogDescription>
+            <DialogDescription>Add a new task to your board.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -113,6 +116,14 @@ export function CreateTaskDialog() {
                   <SelectItem value="high">High</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Due Date (optional)</Label>
+              <DatePicker
+                value={dueDate}
+                onChange={setDueDate}
+                disabled={isPending}
+              />
             </div>
           </div>
           <DialogFooter>

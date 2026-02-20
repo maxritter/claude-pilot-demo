@@ -80,3 +80,12 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes pulse-urgency {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@utility animate-pulse-urgency {
+  animation: pulse-urgency 2s ease-in-out infinite;
+}

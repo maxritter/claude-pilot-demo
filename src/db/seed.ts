@@ -1,6 +1,13 @@
 import { db } from "./index";
 import { tasks, labels, taskLabels } from "./schema";
 
+function daysFromNow(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  const pad = (x: number) => String(x).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 export function seed() {
   const seedTasks = [
     {
@@ -10,6 +17,7 @@ export function seed() {
       priority: "high" as const,
       status: "todo" as const,
       position: 0,
+      dueDate: daysFromNow(-3),
     },
     {
       title: "Write API documentation",
@@ -18,6 +26,7 @@ export function seed() {
       priority: "medium" as const,
       status: "todo" as const,
       position: 1,
+      dueDate: daysFromNow(0),
     },
     {
       title: "Add error tracking",
@@ -25,6 +34,7 @@ export function seed() {
       priority: "medium" as const,
       status: "todo" as const,
       position: 2,
+      dueDate: daysFromNow(2),
     },
     {
       title: "Optimize database queries",
@@ -33,6 +43,7 @@ export function seed() {
       priority: "low" as const,
       status: "todo" as const,
       position: 3,
+      dueDate: daysFromNow(7),
     },
     {
       title: "Update dependencies",
@@ -40,6 +51,7 @@ export function seed() {
       priority: "low" as const,
       status: "todo" as const,
       position: 4,
+      dueDate: null,
     },
     {
       title: "Design mobile mockups",
@@ -48,6 +60,7 @@ export function seed() {
       priority: "medium" as const,
       status: "todo" as const,
       position: 5,
+      dueDate: null,
     },
     {
       title: "Implement user authentication",
@@ -56,6 +69,7 @@ export function seed() {
       priority: "high" as const,
       status: "in-progress" as const,
       position: 0,
+      dueDate: daysFromNow(-1),
     },
     {
       title: "Fix login page bug",
@@ -64,6 +78,7 @@ export function seed() {
       priority: "high" as const,
       status: "in-progress" as const,
       position: 1,
+      dueDate: daysFromNow(1),
     },
     {
       title: "Add unit tests",
@@ -72,6 +87,7 @@ export function seed() {
       priority: "medium" as const,
       status: "in-progress" as const,
       position: 2,
+      dueDate: daysFromNow(3),
     },
     {
       title: "Refactor payment module",
@@ -80,6 +96,7 @@ export function seed() {
       priority: "medium" as const,
       status: "in-progress" as const,
       position: 3,
+      dueDate: daysFromNow(14),
     },
     {
       title: "Update user profile UI",
@@ -88,6 +105,7 @@ export function seed() {
       priority: "low" as const,
       status: "in-progress" as const,
       position: 4,
+      dueDate: null,
     },
     {
       title: "Deploy to staging",
@@ -96,6 +114,7 @@ export function seed() {
       priority: "high" as const,
       status: "done" as const,
       position: 0,
+      dueDate: daysFromNow(-7),
     },
     {
       title: "Database migration",
@@ -104,6 +123,7 @@ export function seed() {
       priority: "high" as const,
       status: "done" as const,
       position: 1,
+      dueDate: null,
     },
     {
       title: "Security audit",
@@ -112,6 +132,7 @@ export function seed() {
       priority: "medium" as const,
       status: "done" as const,
       position: 2,
+      dueDate: null,
     },
     {
       title: "Setup project repository",
@@ -120,6 +141,7 @@ export function seed() {
       priority: "low" as const,
       status: "done" as const,
       position: 3,
+      dueDate: null,
     },
   ];
 
