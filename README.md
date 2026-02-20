@@ -25,7 +25,7 @@ This repository is a **live demo** of what [Claude Pilot](https://github.com/max
 
 **Zero manual intervention.** No hand-tuning, no manual bug fixing, no code edits by a human. The initial prompt produced the complete working app. Each of the three feature prompts was one-shotted by Claude Pilot — plan, implement, test, verify, merge — with no human involvement beyond approving the plan. The 3 features were built in parallel using git worktrees, each on its own isolated branch, and squash-merged to main after automated verification passed.
 
-Every line of code — from database schema to UI components to 44 tests — was planned, implemented, and verified entirely by AI. Even this README, the screenshots, and the repository setup were created by Claude Pilot.
+Every line of code — from database schema to UI components to tests — was planned, implemented, and verified entirely by AI. Even this README, the screenshots, and the repository setup were created by Claude Pilot.
 
 > **Claude Code is powerful. Pilot makes it reliable.**
 > Tests enforced. Context preserved. Quality automated.
@@ -194,7 +194,7 @@ For each `/spec` command, Claude Pilot automatically:
 
 All 3 features were built in parallel — each in its own git worktree on a dedicated branch. No conflicts, no coordination needed. When verification passed, each worktree was squash-merged to main as a single clean commit.
 
-**Result:** 44 tests, clean TypeScript, zero lint errors, verified E2E — zero manual code edits, zero bug fixes by a human.
+**Result:** Clean TypeScript, zero lint errors, verified E2E — zero manual code edits, zero bug fixes by a human.
 
 ---
 
@@ -208,7 +208,7 @@ All 3 features were built in parallel — each in its own git worktree on a dedi
 | UI Components | shadcn/ui (Radix UI) + Tailwind CSS v4 |
 | Drag & Drop | @hello-pangea/dnd |
 | Toasts | Sonner |
-| Testing | Vitest (44 tests) |
+| Testing | Vitest |
 | Package Manager | Yarn |
 
 ---
