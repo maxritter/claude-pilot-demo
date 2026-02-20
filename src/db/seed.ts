@@ -166,25 +166,32 @@ export function seedLabels() {
 
   const assignments: Array<{ taskId: number; labelId: number }> = [];
 
-  const ciTask = findTask("Set up CI/CD pipeline");
-  const devopsLabel = findLabel("DevOps");
-  if (ciTask && devopsLabel)
-    assignments.push({ taskId: ciTask.id, labelId: devopsLabel.id });
-
-  const docsTask = findTask("Write API documentation");
-  const docsLabel = findLabel("Docs");
-  if (docsTask && docsLabel)
-    assignments.push({ taskId: docsTask.id, labelId: docsLabel.id });
-
-  const bugTask = findTask("Fix login page bug");
   const bugLabel = findLabel("Bug");
-  if (bugTask && bugLabel)
-    assignments.push({ taskId: bugTask.id, labelId: bugLabel.id });
-
-  const authTask = findTask("Implement user authentication");
   const featureLabel = findLabel("Feature");
-  if (authTask && featureLabel)
-    assignments.push({ taskId: authTask.id, labelId: featureLabel.id });
+  const docsLabel = findLabel("Docs");
+  const devopsLabel = findLabel("DevOps");
+
+  const assign = (taskTitle: string, label: typeof bugLabel) => {
+    const t = findTask(taskTitle);
+    if (t && label) assignments.push({ taskId: t.id, labelId: label.id });
+  };
+
+  assign("Fix login page bug", bugLabel);
+  assign("Add error tracking", bugLabel);
+  assign("Optimize database queries", bugLabel);
+
+  assign("Implement user authentication", featureLabel);
+  assign("Build dashboard widgets", featureLabel);
+  assign("Refactor payment module", featureLabel);
+  assign("Update user profile UI", featureLabel);
+  assign("Add unit tests", featureLabel);
+
+  assign("Write API documentation", docsLabel);
+  assign("Design mobile mockups", docsLabel);
+
+  assign("Set up CI/CD pipeline", devopsLabel);
+  assign("Deploy to staging", devopsLabel);
+  assign("Database migration", devopsLabel);
 
   if (assignments.length > 0) {
     db.insert(taskLabels).values(assignments).run();

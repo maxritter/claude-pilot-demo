@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/maxritter/claude-pilot"><img src="https://img.shields.io/badge/Built_with-Claude_Pilot-F59E0B?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6Ii8+PHBhdGggZD0iTTIgMTdsMTAgNSAxMC01Ii8+PHBhdGggZD0iTTIgMTJsMTAgNSAxMC01Ii8+PC9zdmc+" alt="Built with Claude Pilot"></a>
+  <a href="https://github.com/maxritter/claude-pilot"><img src="https://img.shields.io/badge/Built_with-Claude_Pilot-F59E0B?style=flat" alt="Built with Claude Pilot"></a>
   <a href="https://github.com/maxritter/claude-pilot"><img src="https://img.shields.io/github/stars/maxritter/claude-pilot?style=flat&color=F59E0B&label=Claude%20Pilot%20Stars" alt="Claude Pilot Stars"></a>
 </p>
 
@@ -25,7 +25,7 @@ This repository is a **live demo** of what [Claude Pilot](https://github.com/max
 
 **Zero manual intervention.** No hand-tuning, no manual bug fixing, no code edits by a human. The initial prompt produced the complete working app. Each of the three feature prompts was one-shotted by Claude Pilot — plan, implement, test, verify, merge — with no human involvement beyond approving the plan. The 3 features were built in parallel using git worktrees, each on its own isolated branch, and squash-merged to main after automated verification passed.
 
-Every line of code — from database schema to UI components to 44 tests — was planned, implemented, and verified entirely by AI.
+Every line of code — from database schema to UI components to 44 tests — was planned, implemented, and verified entirely by AI. Even this README, the screenshots, and the repository setup were created by Claude Pilot.
 
 > **Claude Code is powerful. Pilot makes it reliable.**
 > Tests enforced. Context preserved. Quality automated.
@@ -201,73 +201,6 @@ All 3 features were built in parallel — each in its own git worktree on a dedi
 | Testing | Vitest (44 tests) |
 | Package Manager | Yarn |
 
-## Getting Started
-
-```bash
-# Clone the repo
-git clone https://github.com/maxritter/claude-pilot-demo.git
-cd claude-pilot-demo
-
-# Install dependencies
-yarn install
-
-# Start the dev server
-yarn dev
-```
-
-Open [http://localhost:3000](http://localhost:3000). The database auto-seeds with 15 sample tasks, 4 labels, and label assignments on first run.
-
-### Other Commands
-
-```bash
-yarn build        # Production build
-yarn test         # Run all 44 tests
-yarn lint         # ESLint
-```
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── actions.ts              # Server Actions — task CRUD
-│   ├── label-actions.ts        # Label CRUD and assignment
-│   ├── page.tsx                # Server component — data fetching
-│   └── layout.tsx              # Root layout
-├── components/
-│   ├── board.tsx               # Kanban board — DnD, filtering, sorting
-│   ├── column.tsx              # Droppable column with sort toggle
-│   ├── task-card.tsx           # Task card — labels, subtasks, due dates
-│   ├── edit-task-dialog.tsx    # Edit dialog with all features
-│   ├── create-task-dialog.tsx  # Create dialog with date picker
-│   ├── date-picker.tsx         # Calendar date picker
-│   ├── due-date-badge.tsx      # Color-coded relative time badge
-│   ├── subtask-checklist.tsx   # Checklist with add/toggle/delete
-│   ├── label-filter.tsx        # Label filter bar
-│   ├── label-manager-dialog.tsx # Label management UI
-│   └── ui/                     # shadcn/ui components
-├── db/
-│   ├── schema.ts               # Drizzle schema (tasks, subtasks, labels, task_labels)
-│   ├── index.ts                # DB singleton with auto-seed
-│   └── seed.ts                 # Sample data seeder
-└── lib/
-    ├── types.ts                # Type exports
-    ├── label-colors.ts         # 10-color palette
-    └── date-utils.ts           # Relative dates + urgency logic
-```
-
-## Git History
-
-Each feature is a single, clean commit thanks to git worktree isolation and squash merging:
-
-```
-e3ecf54 feat: add due dates to tasks with smart visual urgency indicators
-d9d601c feat: implement colorful labels/tags system with CRUD, assignment, filtering, and DnD safety
-1505f40 feat: implement spec/subtasks-checklist-system
-0a3202c chore: Updated Gitignore
-4087dde feat: Awesome Task Board v1.0.0
-```
-
 ---
 
 ## Try Claude Pilot
@@ -279,3 +212,17 @@ curl -fsSL https://raw.githubusercontent.com/maxritter/claude-pilot/main/install
 ```
 
 **[Claude Pilot on GitHub](https://github.com/maxritter/claude-pilot)** — Structured spec-driven development for Claude Code with TDD, automated verification, and git worktree isolation.
+
+---
+
+## Workshops & Enterprise Adoption
+
+Claude Pilot is built by [Max Ritter](https://www.maxritter.net/), a senior IT freelancer and consultant from Germany. Max helps companies and enterprises adopt Claude Code and Claude Pilot for production-grade AI-assisted development.
+
+**What's on offer:**
+
+- **Agentic Engineering Workshops** — Hands-on training for development teams on Claude Code, Claude Pilot, and spec-driven AI development
+- **Enterprise Rollout** — Guidance on introducing and rolling out Claude Pilot across your organization, including custom rules, team vaults, and quality guardrails
+- **Consulting** — Architecture reviews, workflow optimization, and best practices for AI-assisted development at scale
+
+**Get in touch:** [mail@maxritter.net](mailto:mail@maxritter.net)
