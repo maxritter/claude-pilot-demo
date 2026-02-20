@@ -1,16 +1,27 @@
 import { db } from "@/db";
-import { tasks } from "@/db/schema";
+import { tasks, subtasks } from "@/db/schema";
 import { BoardWrapper } from "@/components/board-wrapper";
 import { CreateTaskDialog } from "@/components/create-task-dialog";
 import { asc } from "drizzle-orm";
+import type { SubtasksMap } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const allTasks = await db
+  const allTasks = await db.select().from(tasks).orderBy(asc(tasks.position));
+
+  const allSubtasks = await db
     .select()
-    .from(tasks)
-    .orderBy(asc(tasks.position));
+    .from(subtasks)
+    .orderBy(asc(subtasks.position));
+
+  const subtasksMap: SubtasksMap = {};
+  for (const subtask of allSubtasks) {
+    if (!subtasksMap[subtask.taskId]) {
+      subtasksMap[subtask.taskId] = [];
+    }
+    subtasksMap[subtask.taskId].push(subtask);
+  }
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -21,7 +32,7 @@ export default async function Home() {
         </div>
       </header>
       <main className="flex-1 p-6">
-        <BoardWrapper tasks={allTasks} />
+        <BoardWrapper tasks={allTasks} subtasksMap={subtasksMap} />
       </main>
     </div>
   );

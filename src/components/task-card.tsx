@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteTaskDialog } from "./delete-task-dialog";
-import type { Task } from "@/lib/types";
+import type { Task, Subtask } from "@/lib/types";
 
 const priorityColors = {
   low: "bg-green-100 text-green-800 border-green-300",
@@ -17,9 +17,37 @@ const priorityColors = {
 
 interface TaskCardProps {
   task: Task;
+  subtasks: Subtask[];
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+function SubtaskProgress({ subtasks }: { subtasks: Subtask[] }) {
+  if (subtasks.length === 0) return null;
+
+  const completed = subtasks.filter((s) => s.completed).length;
+  const total = subtasks.length;
+  const pct = total > 0 ? completed / total : 0;
+
+  const fillColor =
+    pct === 0 ? "bg-gray-300" : pct === 1 ? "bg-green-500" : "bg-blue-500";
+
+  return (
+    <div className="mt-2 space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">
+          {completed}/{total}
+        </span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-gray-200">
+        <div
+          className={`h-1.5 rounded-full transition-all ${fillColor}`}
+          style={{ width: `${pct * 100}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function TaskCard({ task, subtasks }: TaskCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -63,15 +91,23 @@ export function TaskCard({ task }: TaskCardProps) {
             </div>
           </div>
         </CardHeader>
-        {task.description && (
+        {(task.description || subtasks.length > 0) && (
           <CardContent>
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {task.description}
-            </p>
+            {task.description && (
+              <p className="text-sm text-muted-foreground line-clamp-2">
+                {task.description}
+              </p>
+            )}
+            <SubtaskProgress subtasks={subtasks} />
           </CardContent>
         )}
       </Card>
-      <EditTaskDialog task={task} open={editOpen} onOpenChange={setEditOpen} />
+      <EditTaskDialog
+        task={task}
+        subtasks={subtasks}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
       <DeleteTaskDialog
         taskId={task.id}
         taskTitle={task.title}

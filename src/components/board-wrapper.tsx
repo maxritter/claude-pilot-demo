@@ -1,12 +1,17 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { Task } from "@/lib/types";
+import type { Task, SubtasksMap } from "@/lib/types";
 
 const Board = dynamic(() => import("./board").then((mod) => mod.Board), {
   ssr: false,
 });
 
-export function BoardWrapper({ tasks }: { tasks: Task[] }) {
-  return <Board tasks={tasks} />;
+interface BoardWrapperProps {
+  tasks: Task[];
+  subtasksMap: SubtasksMap;
+}
+
+export function BoardWrapper({ tasks, subtasksMap }: BoardWrapperProps) {
+  return <Board tasks={tasks} subtasksMap={subtasksMap} />;
 }

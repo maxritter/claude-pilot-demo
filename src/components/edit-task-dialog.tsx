@@ -22,19 +22,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateTask } from "@/app/actions";
-import type { Task, Priority } from "@/lib/types";
+import { SubtaskChecklist } from "./subtask-checklist";
+import type { Task, Priority, Subtask } from "@/lib/types";
 
 interface EditTaskDialogProps {
   task: Task;
+  subtasks: Subtask[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps) {
+export function EditTaskDialog({
+  task,
+  subtasks: subtasksProp,
+  open,
+  onOpenChange,
+}: EditTaskDialogProps) {
   const [isPending, setIsPending] = useState(false);
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [priority, setPriority] = useState<Priority>(task.priority);
+  const [localSubtasks, setLocalSubtasks] = useState<Subtask[]>(subtasksProp);
 
   useEffect(() => {
     if (open) {
@@ -43,6 +51,10 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
       setPriority(task.priority);
     }
   }, [open, task.title, task.description, task.priority]);
+
+  useEffect(() => {
+    setLocalSubtasks(subtasksProp);
+  }, [subtasksProp]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,13 +84,11 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Task</DialogTitle>
-            <DialogDescription>
-              Update task details.
-            </DialogDescription>
+            <DialogDescription>Update task details.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -118,6 +128,11 @@ export function EditTaskDialog({ task, open, onOpenChange }: EditTaskDialogProps
                 </SelectContent>
               </Select>
             </div>
+            <SubtaskChecklist
+              taskId={task.id}
+              subtasks={localSubtasks}
+              onSubtasksChange={setLocalSubtasks}
+            />
           </div>
           <DialogFooter>
             <Button

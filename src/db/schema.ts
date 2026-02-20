@@ -17,7 +17,17 @@ export const tasks = sqliteTable("tasks", {
     .default(sql`(datetime('now'))`),
 });
 
+export const subtasks = sqliteTable("subtasks", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  taskId: integer("task_id").notNull(),
+  title: text("title").notNull(),
+  completed: integer("completed", { mode: "boolean" }).notNull().default(false),
+  position: integer("position").notNull().default(0),
+});
+
 export type Task = typeof tasks.$inferSelect;
 export type NewTask = typeof tasks.$inferInsert;
+export type Subtask = typeof subtasks.$inferSelect;
+export type NewSubtask = typeof subtasks.$inferInsert;
 export type Priority = "low" | "medium" | "high";
 export type Status = "todo" | "in-progress" | "done";

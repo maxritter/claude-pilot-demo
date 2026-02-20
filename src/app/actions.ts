@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { tasks } from "@/db/schema";
+import { tasks, subtasks } from "@/db/schema";
 import type { Priority, Status } from "@/lib/types";
 import { eq, max, and, ne } from "drizzle-orm";
 
@@ -47,7 +47,7 @@ export async function updateTask(
     title?: string;
     description?: string;
     priority?: Priority;
-  }
+  },
 ) {
   try {
     const result = await db
@@ -79,6 +79,8 @@ export async function deleteTask(id: number) {
         throw new Error("Task not found");
       }
 
+      tx.delete(subtasks).where(eq(subtasks.taskId, id)).run();
+
       tx.delete(tasks).where(eq(tasks.id, id)).run();
 
       const remaining = tx
@@ -109,15 +111,11 @@ export async function deleteTask(id: number) {
 export async function moveTask(
   id: number,
   newStatus: Status,
-  newPosition: number
+  newPosition: number,
 ) {
   try {
     db.transaction((tx) => {
-      const task = tx
-        .select()
-        .from(tasks)
-        .where(eq(tasks.id, id))
-        .get();
+      const task = tx.select().from(tasks).where(eq(tasks.id, id)).get();
 
       if (!task) {
         throw new Error("Task not found");
@@ -133,8 +131,7 @@ export async function moveTask(
         .all();
 
       for (let i = 0; i < sourceTasks.length; i++) {
-        tx
-          .update(tasks)
+        tx.update(tasks)
           .set({ position: i })
           .where(eq(tasks.id, sourceTasks[i].id))
           .run();
@@ -146,21 +143,19 @@ export async function moveTask(
         .where(
           oldStatus === newStatus
             ? and(eq(tasks.status, newStatus), ne(tasks.id, id))
-            : eq(tasks.status, newStatus)
+            : eq(tasks.status, newStatus),
         )
         .orderBy(tasks.position)
         .all();
 
       for (let i = destTasks.length - 1; i >= newPosition; i--) {
-        tx
-          .update(tasks)
+        tx.update(tasks)
           .set({ position: i + 1 })
           .where(eq(tasks.id, destTasks[i].id))
           .run();
       }
 
-      tx
-        .update(tasks)
+      tx.update(tasks)
         .set({ status: newStatus, position: newPosition })
         .where(eq(tasks.id, id))
         .run();

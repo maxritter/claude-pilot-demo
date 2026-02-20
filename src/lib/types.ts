@@ -1,1 +1,4 @@
-export type { Task, Priority, Status } from "@/db/schema";
+import type { Subtask } from "@/db/schema";
+
+export type { Task, NewTask, Subtask, NewSubtask, Priority, Status } from "@/db/schema";
+export type SubtasksMap = Record<number, Subtask[]>;

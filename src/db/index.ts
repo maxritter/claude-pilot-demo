@@ -9,15 +9,10 @@ type DB = ReturnType<typeof drizzle<typeof schema>>;
 
 declare global {
   var __db: DB | undefined;
+  var __sqlite: Database.Database | undefined;
 }
 
-function initDb(): DB {
-  if (global.__db) return global.__db;
-
-  const dbPath = path.join(process.cwd(), "sqlite.db");
-  const sqlite = new Database(dbPath);
-  sqlite.pragma("journal_mode = WAL");
-
+function ensureTables(sqlite: Database.Database) {
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS tasks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,9 +25,36 @@ function initDb(): DB {
     )
   `);
 
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS subtasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0,
+      position INTEGER NOT NULL DEFAULT 0
+    )
+  `);
+}
+
+function initDb(): DB {
+  if (global.__sqlite) {
+    ensureTables(global.__sqlite);
+    if (global.__db) return global.__db;
+  }
+
+  const dbPath = path.join(process.cwd(), "sqlite.db");
+  const sqlite = new Database(dbPath);
+  sqlite.pragma("journal_mode = WAL");
+
+  ensureTables(sqlite);
+
+  global.__sqlite = sqlite;
   global.__db = drizzle(sqlite, { schema });
 
-  const [result] = global.__db.select({ count: count() }).from(schema.tasks).all();
+  const [result] = global.__db
+    .select({ count: count() })
+    .from(schema.tasks)
+    .all();
   if (result.count === 0) {
     seed();
   }

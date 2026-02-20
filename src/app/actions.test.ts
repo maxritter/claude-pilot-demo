@@ -4,6 +4,12 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { eq } from "drizzle-orm";
 import * as schema from "@/db/schema";
 import { createTask, updateTask, deleteTask, moveTask } from "./actions";
+import {
+  createSubtask,
+  toggleSubtask,
+  deleteSubtask,
+  moveSubtask,
+} from "./subtask-actions";
 
 let testDb: ReturnType<typeof drizzle<typeof schema>>;
 let sqlite: Database.Database;
@@ -31,6 +37,16 @@ beforeEach(() => {
       status TEXT NOT NULL DEFAULT 'todo',
       position INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+
+  sqlite.exec(`
+    CREATE TABLE subtasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      task_id INTEGER NOT NULL,
+      title TEXT NOT NULL,
+      completed INTEGER NOT NULL DEFAULT 0,
+      position INTEGER NOT NULL DEFAULT 0
     )
   `);
 });
@@ -63,9 +79,7 @@ describe("createTask", () => {
     const newTask = tasks.find((t) => t.title === "New Task");
     expect(newTask?.position).toBe(1);
   });
-});
 
-describe("createTask", () => {
   it("should reject empty title at server level", async () => {
     await expect(createTask({ title: "   " })).rejects.toThrow("Title is required");
 
@@ -128,6 +142,25 @@ describe("deleteTask", () => {
 
   it("should throw when task does not exist", async () => {
     await expect(deleteTask(999)).rejects.toThrow("Task not found");
+  });
+
+  it("should cascade delete subtasks when task is deleted", async () => {
+    const task = testDb.insert(schema.tasks).values({
+      title: "Task with subtasks",
+      status: "todo",
+      position: 0,
+    }).returning().get();
+
+    testDb.insert(schema.subtasks).values([
+      { taskId: task.id, title: "Subtask 1", position: 0 },
+      { taskId: task.id, title: "Subtask 2", position: 1 },
+    ]).run();
+
+    await deleteTask(task.id);
+
+    const remaining = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.taskId, task.id)).all();
+    expect(remaining).toHaveLength(0);
   });
 });
 
@@ -212,5 +245,182 @@ describe("moveTask", () => {
     expect(tasks[1].position).toBe(1);
     expect(tasks[2].title).toBe("Task 1");
     expect(tasks[2].position).toBe(2);
+  });
+});
+
+
+describe("createSubtask", () => {
+  it("should create a subtask with position 0 when none exist", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Parent Task" }).returning().get();
+
+    await createSubtask(task.id, "First subtask");
+
+    const subtasks = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.taskId, task.id)).all();
+    expect(subtasks).toHaveLength(1);
+    expect(subtasks[0].title).toBe("First subtask");
+    expect(subtasks[0].completed).toBe(false);
+    expect(subtasks[0].position).toBe(0);
+  });
+
+  it("should set position as max + 1 when subtasks exist", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Parent Task" }).returning().get();
+    testDb.insert(schema.subtasks).values([
+      { taskId: task.id, title: "Sub 1", position: 0 },
+      { taskId: task.id, title: "Sub 2", position: 1 },
+    ]).run();
+
+    await createSubtask(task.id, "Sub 3");
+
+    const subtask = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.title, "Sub 3")).get();
+    expect(subtask?.position).toBe(2);
+  });
+
+  it("should reject empty title", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Parent Task" }).returning().get();
+    await expect(createSubtask(task.id, "   ")).rejects.toThrow("Subtask title is required");
+  });
+
+  it("should reject if parent task does not exist", async () => {
+    await expect(createSubtask(999, "Orphan subtask")).rejects.toThrow("Task not found");
+  });
+});
+
+describe("toggleSubtask", () => {
+  it("should mark subtask as completed", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Task" }).returning().get();
+    const subtask = testDb.insert(schema.subtasks).values({
+      taskId: task.id, title: "Sub", position: 0,
+    }).returning().get();
+
+    await toggleSubtask(subtask.id, true);
+
+    const updated = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.id, subtask.id)).get();
+    expect(updated?.completed).toBe(true);
+  });
+
+  it("should mark subtask as incomplete", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Task" }).returning().get();
+    const subtask = testDb.insert(schema.subtasks).values({
+      taskId: task.id, title: "Sub", completed: true, position: 0,
+    }).returning().get();
+
+    await toggleSubtask(subtask.id, false);
+
+    const updated = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.id, subtask.id)).get();
+    expect(updated?.completed).toBe(false);
+  });
+
+  it("should throw when subtask does not exist", async () => {
+    await expect(toggleSubtask(999, true)).rejects.toThrow("Subtask not found");
+  });
+});
+
+describe("deleteSubtask", () => {
+  it("should delete subtask and recompute positions", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Task" }).returning().get();
+    testDb.insert(schema.subtasks).values([
+      { taskId: task.id, title: "Sub A", position: 0 },
+      { taskId: task.id, title: "Sub B", position: 1 },
+      { taskId: task.id, title: "Sub C", position: 2 },
+    ]).run();
+
+    const subB = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.title, "Sub B")).get();
+    if (!subB) throw new Error("Subtask not found");
+
+    await deleteSubtask(subB.id);
+
+    const remaining = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.taskId, task.id))
+      .orderBy(schema.subtasks.position)
+      .all();
+    expect(remaining).toHaveLength(2);
+    expect(remaining[0].title).toBe("Sub A");
+    expect(remaining[0].position).toBe(0);
+    expect(remaining[1].title).toBe("Sub C");
+    expect(remaining[1].position).toBe(1);
+  });
+
+  it("should throw when subtask does not exist", async () => {
+    await expect(deleteSubtask(999)).rejects.toThrow("Subtask not found");
+  });
+});
+
+describe("moveSubtask", () => {
+  it("should reorder subtasks within parent task", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Task" }).returning().get();
+    testDb.insert(schema.subtasks).values([
+      { taskId: task.id, title: "Sub 1", position: 0 },
+      { taskId: task.id, title: "Sub 2", position: 1 },
+      { taskId: task.id, title: "Sub 3", position: 2 },
+    ]).run();
+
+    const sub1 = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.title, "Sub 1")).get();
+    if (!sub1) throw new Error("Subtask not found");
+
+    await moveSubtask(sub1.id, 2);
+
+    const reordered = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.taskId, task.id))
+      .orderBy(schema.subtasks.position)
+      .all();
+    expect(reordered[0].title).toBe("Sub 2");
+    expect(reordered[0].position).toBe(0);
+    expect(reordered[1].title).toBe("Sub 3");
+    expect(reordered[1].position).toBe(1);
+    expect(reordered[2].title).toBe("Sub 1");
+    expect(reordered[2].position).toBe(2);
+  });
+
+  it("should clamp out-of-bounds position to last valid index", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Task" }).returning().get();
+    testDb.insert(schema.subtasks).values([
+      { taskId: task.id, title: "Sub 1", position: 0 },
+      { taskId: task.id, title: "Sub 2", position: 1 },
+    ]).run();
+
+    const sub1 = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.title, "Sub 1")).get();
+    if (!sub1) throw new Error("Subtask not found");
+
+    await moveSubtask(sub1.id, 99);
+
+    const reordered = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.taskId, task.id))
+      .orderBy(schema.subtasks.position)
+      .all();
+    expect(reordered[0].title).toBe("Sub 2");
+    expect(reordered[1].title).toBe("Sub 1");
+  });
+
+  it("should clamp negative position to zero", async () => {
+    const task = testDb.insert(schema.tasks).values({ title: "Task" }).returning().get();
+    testDb.insert(schema.subtasks).values([
+      { taskId: task.id, title: "Sub 1", position: 0 },
+      { taskId: task.id, title: "Sub 2", position: 1 },
+      { taskId: task.id, title: "Sub 3", position: 2 },
+    ]).run();
+
+    const sub3 = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.title, "Sub 3")).get();
+    if (!sub3) throw new Error("Subtask not found");
+
+    await moveSubtask(sub3.id, -5);
+
+    const reordered = testDb.select().from(schema.subtasks)
+      .where(eq(schema.subtasks.taskId, task.id))
+      .orderBy(schema.subtasks.position)
+      .all();
+    expect(reordered[0].title).toBe("Sub 3");
+    expect(reordered[0].position).toBe(0);
+  });
+
+  it("should throw when subtask does not exist", async () => {
+    await expect(moveSubtask(999, 0)).rejects.toThrow("Subtask not found");
   });
 });
