@@ -33,13 +33,13 @@ Every line of code — from database schema to UI components to tests — was pl
 ## The Demo
 
 <p align="center">
-  <a href="https://youtu.be/NHw8BloZB_M">
-    <img src="https://img.youtube.com/vi/NHw8BloZB_M/maxresdefault.jpg" alt="Watch the Claude Pilot Demo" width="700">
+  <a href="https://youtu.be/S7faAK931NU">
+    <img src="https://img.youtube.com/vi/S7faAK931NU/maxresdefault.jpg" alt="Watch the Claude Pilot Demo" width="700">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://youtu.be/NHw8BloZB_M"><b>Watch the full demo on YouTube</b></a>
+  <a href="https://youtu.be/S7faAK931NU"><b>Watch the full demo on YouTube</b></a>
 </p>
 
 This demo was recorded live and shows all three features being built in real-time using Claude Pilot's `/spec` workflow — each one-shotted with zero manual code edits:
@@ -99,6 +99,7 @@ The entire base application was created from this single prompt:
 > Build a Kanban task board app using Next.js (App Router), SQLite (via Drizzle ORM + better-sqlite3), Tailwind CSS with shadcn/ui components, and @hello-pangea/dnd for drag-and-drop.
 >
 > Single-page task board with three columns: To Do, In Progress, Done. Users can:
+>
 > - Drag and drop task cards between columns (optimistic UI, no flicker)
 > - Create new tasks (title, description, priority: Low/Medium/High)
 > - Edit existing tasks via a modal dialog
@@ -183,14 +184,14 @@ playwright-cli.
 
 For each `/spec` command, Claude Pilot automatically:
 
-| Step | What Happens |
-|------|-------------|
-| **Plan** | Explores the codebase with semantic search, designs the implementation, writes a detailed task-by-task plan with definitions of done |
-| **Review** | Adversarial plan-challenger and plan-verifier agents independently review the plan for gaps, missing edge cases, and architectural issues |
-| **Approve** | Presents the plan for human review — the only manual step |
-| **Implement** | Strict TDD for each task (red-green-refactor). Quality hooks auto-lint, format, and type-check every file edit |
-| **Verify** | Code review agents, type checking, linting, build verification, E2E testing with Playwright, and execution verification |
-| **Merge** | Each feature developed in an isolated git worktree, squash-merged to main after verification passes |
+| Step          | What Happens                                                                                                                              |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Plan**      | Explores the codebase with semantic search, designs the implementation, writes a detailed task-by-task plan with definitions of done      |
+| **Review**    | Adversarial plan-challenger and plan-verifier agents independently review the plan for gaps, missing edge cases, and architectural issues |
+| **Approve**   | Presents the plan for human review — the only manual step                                                                                 |
+| **Implement** | Strict TDD for each task (red-green-refactor). Quality hooks auto-lint, format, and type-check every file edit                            |
+| **Verify**    | Code review agents, type checking, linting, build verification, E2E testing with Playwright, and execution verification                   |
+| **Merge**     | Each feature developed in an isolated git worktree, squash-merged to main after verification passes                                       |
 
 All 3 features were built in parallel — each in its own git worktree on a dedicated branch. No conflicts, no coordination needed. When verification passed, each worktree was squash-merged to main as a single clean commit.
 
@@ -200,16 +201,16 @@ All 3 features were built in parallel — each in its own git worktree on a dedi
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript |
-| Database | SQLite via better-sqlite3 + Drizzle ORM |
-| UI Components | shadcn/ui (Radix UI) + Tailwind CSS v4 |
-| Drag & Drop | @hello-pangea/dnd |
-| Toasts | Sonner |
-| Testing | Vitest |
-| Package Manager | Yarn |
+| Layer           | Technology                              |
+| --------------- | --------------------------------------- |
+| Framework       | Next.js 16 (App Router)                 |
+| Language        | TypeScript                              |
+| Database        | SQLite via better-sqlite3 + Drizzle ORM |
+| UI Components   | shadcn/ui (Radix UI) + Tailwind CSS v4  |
+| Drag & Drop     | @hello-pangea/dnd                       |
+| Toasts          | Sonner                                  |
+| Testing         | Vitest                                  |
+| Package Manager | Yarn                                    |
 
 ---
 
