@@ -1,31 +1,31 @@
 <p align="center">
-  <img src="public/screenshots/board-overview.png" alt="Claude Pilot Demo — Awesome Task Board" width="800">
+  <img src="public/screenshots/board-overview.png" alt="Pilot Shell Demo — Awesome Task Board" width="800">
 </p>
 
-<h1 align="center">Claude Pilot Demo</h1>
+<h1 align="center">Pilot Shell Demo</h1>
 
 <p align="center">
-  A full-featured Kanban task board — built and extended entirely by AI using <a href="https://github.com/maxritter/claude-pilot">Claude Pilot</a>.<br>
+  A full-featured Kanban task board — built and extended entirely by AI using <a href="https://github.com/maxritter/pilot-shell">Pilot Shell</a>.<br>
   Start a task, grab a coffee, come back to production-grade code.
 </p>
 
 <p align="center">
-  <a href="https://github.com/maxritter/claude-pilot"><img src="https://img.shields.io/badge/Built_with-Claude_Pilot-F59E0B?style=flat" alt="Built with Claude Pilot"></a>
-  <a href="https://github.com/maxritter/claude-pilot"><img src="https://img.shields.io/github/stars/maxritter/claude-pilot?style=flat&color=F59E0B&label=Claude%20Pilot%20Stars" alt="Claude Pilot Stars"></a>
+  <a href="https://github.com/maxritter/pilot-shell"><img src="https://img.shields.io/badge/Built_with-Pilot_Shell-F59E0B?style=flat" alt="Built with Pilot Shell"></a>
+  <a href="https://github.com/maxritter/pilot-shell"><img src="https://img.shields.io/github/stars/maxritter/pilot-shell?style=flat&color=F59E0B&label=Pilot%20Shell%20Stars" alt="Pilot Shell Stars"></a>
 </p>
 
 ---
 
 ## What Is This?
 
-This repository is a **live demo** of what [Claude Pilot](https://github.com/maxritter/claude-pilot) can do. It showcases an Awesome Task Board app that was:
+This repository is a **live demo** of what [Pilot Shell](https://github.com/maxritter/pilot-shell) can do. It showcases an Awesome Task Board app that was:
 
 1. **Created from scratch** with a single prompt — full Kanban board with drag-and-drop, CRUD, SQLite persistence
-2. **Extended with 3 features in parallel** — each one-shotted by Claude Pilot's `/spec` command, built simultaneously in isolated git worktrees
+2. **Extended with 3 features in parallel** — each one-shotted by Pilot Shell's `/spec` command, built simultaneously in isolated git worktrees
 
-**Zero manual intervention.** No hand-tuning, no manual bug fixing, no code edits by a human. The initial prompt produced the complete working app. Each of the three feature prompts was one-shotted by Claude Pilot — plan, implement, test, verify, merge — with no human involvement beyond approving the plan. The 3 features were built in parallel using git worktrees, each on its own isolated branch, and squash-merged to main after automated verification passed.
+**Zero manual intervention.** No hand-tuning, no manual bug fixing, no code edits by a human. The initial prompt produced the complete working app. Each of the three feature prompts was one-shotted by Pilot Shell — plan, implement, test, verify, merge — with no human involvement beyond approving the plan. The 3 features were built in parallel using git worktrees, each on its own isolated branch, and squash-merged to main after automated verification passed.
 
-Every line of code — from database schema to UI components to tests — was planned, implemented, and verified entirely by AI. Even this README, the screenshots, and the repository setup were created by Claude Pilot.
+Every line of code — from database schema to UI components to tests — was planned, implemented, and verified entirely by AI. Even this README, the screenshots, and the repository setup were created by Pilot Shell.
 
 > **Claude Code is powerful. Pilot makes it reliable.**
 > Tests enforced. Context preserved. Quality automated.
@@ -34,7 +34,7 @@ Every line of code — from database schema to UI components to tests — was pl
 
 <p align="center">
   <a href="https://youtu.be/S7faAK931NU">
-    <img src="https://img.youtube.com/vi/S7faAK931NU/maxresdefault.jpg" alt="Watch the Claude Pilot Demo" width="700">
+    <img src="https://img.youtube.com/vi/S7faAK931NU/maxresdefault.jpg" alt="Watch the Pilot Shell Demo" width="700">
   </a>
 </p>
 
@@ -42,7 +42,7 @@ Every line of code — from database schema to UI components to tests — was pl
   <a href="https://youtu.be/S7faAK931NU"><b>Watch the full demo on YouTube</b></a>
 </p>
 
-This demo was recorded live and shows all three features being built in real-time using Claude Pilot's `/spec` workflow — each one-shotted with zero manual code edits:
+This demo was recorded live and shows all three features being built in real-time using Pilot Shell's `/spec` workflow — each one-shotted with zero manual code edits:
 
 - `/spec` plans the feature, explores the codebase, writes a detailed spec
 - After human approval, it implements with strict TDD (red-green-refactor)
@@ -114,9 +114,9 @@ The entire base application was created from this single prompt:
 
 ### Feature Prompts (via `/spec`)
 
-Each feature was added using Claude Pilot's `/spec` command. Behind the scenes, `/spec` plans the implementation, runs adversarial plan review, gets human approval, implements with TDD, and verifies everything — all in isolated git worktrees.
+Each feature was added using Pilot Shell's `/spec` command. Behind the scenes, `/spec` plans the implementation, runs adversarial plan review, gets human approval, implements with TDD, and verifies everything — all in isolated git worktrees.
 
-You can browse the full implementation plans that Claude Pilot generated and executed — they're included in this repo:
+You can browse the full implementation plans that Pilot Shell generated and executed — they're included in this repo:
 
 - [Initial Board Plan](docs/plans/2026-02-13-kanban-task-board.md)
 - [Labels/Tags Plan](docs/plans/2026-02-20-labels-tags-system.md)
@@ -180,9 +180,9 @@ playwright-cli.
 
 ---
 
-## What Claude Pilot Did (Automatically)
+## What Pilot Shell Did (Automatically)
 
-For each `/spec` command, Claude Pilot automatically:
+For each `/spec` command, Pilot Shell automatically:
 
 | Step          | What Happens                                                                                                                              |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
@@ -214,26 +214,26 @@ All 3 features were built in parallel — each in its own git worktree on a dedi
 
 ---
 
-## Try Claude Pilot
+## Try Pilot Shell
 
-Want to build something like this yourself? Claude Pilot works with **any existing project** — install it, run `/sync` to learn your codebase, then use `/spec` to plan and implement features with full TDD and automated verification.
+Want to build something like this yourself? Pilot Shell works with **any existing project** — install it, run `/sync` to learn your codebase, then use `/spec` to plan and implement features with full TDD and automated verification.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/maxritter/claude-pilot/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/maxritter/pilot-shell/main/install.sh | bash
 ```
 
-**[Claude Pilot on GitHub](https://github.com/maxritter/claude-pilot)** — Structured spec-driven development for Claude Code with TDD, automated verification, and git worktree isolation.
+**[Pilot Shell on GitHub](https://github.com/maxritter/pilot-shell)** — Structured spec-driven development for Claude Code with TDD, automated verification, and git worktree isolation.
 
 ---
 
 ## Workshops & Enterprise Adoption
 
-Claude Pilot is built by [Max Ritter](https://www.maxritter.net/), a senior IT freelancer and consultant from Germany. Max helps companies and enterprises adopt Claude Code and Claude Pilot for production-grade AI-assisted development.
+Pilot Shell is built by [Max Ritter](https://www.maxritter.net/), a senior IT freelancer and consultant from Germany. Max helps companies and enterprises adopt Claude Code and Pilot Shell for production-grade AI-assisted development.
 
 **What's on offer:**
 
-- **Agentic Engineering Workshops** — Hands-on training for development teams on Claude Code, Claude Pilot, and spec-driven AI development
-- **Enterprise Rollout** — Guidance on introducing and rolling out Claude Pilot across your organization, including custom rules, team vaults, and quality guardrails
+- **Agentic Engineering Workshops** — Hands-on training for development teams on Claude Code, Pilot Shell, and spec-driven AI development
+- **Enterprise Rollout** — Guidance on introducing and rolling out Pilot Shell across your organization, including custom rules, team vaults, and quality guardrails
 - **Consulting** — Architecture reviews, workflow optimization, and best practices for AI-assisted development at scale
 
 **Get in touch:** [mail@maxritter.net](mailto:mail@maxritter.net)
